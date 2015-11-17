@@ -12,6 +12,7 @@
         this.id="player"+new Date().getTime()+Math.random();
         this.forward="lt";
         this.type="player";
+        this.status=1;
         this.shoot=function(){
             var b = new bullet(self.x,self.y,self.id,self.forward);
             socket.send(b)
@@ -40,7 +41,8 @@
                     var msg={};
                     msg['attackedId']=id;
                     msg['type']='attMsg';
-                    socket.send(msg)
+                    socket.send(msg);
+                    self.status=0;
                     alert("you die!")
                 }
                 return true;
@@ -211,6 +213,7 @@
      }
     //通过“回车”提交聊天信息
      document.onkeydown=function(e){
+         var sendMsg=false;
          //监听键盘事件 将位置移动等信息传递给所有人
          //左
          if (e.keyCode === 37||e.keyCode === 65) {
@@ -219,6 +222,7 @@
                  self.x-=moveStep;
              else
                  return;
+             sendMsg=true;
          }
          //上
          if (e.keyCode === 38||e.keyCode === 87) {
@@ -226,6 +230,7 @@
                  self.y-=moveStep;
              else
                 return;
+             sendMsg=true;
          }
          //右
          if (e.keyCode === 39||e.keyCode === 68) {
@@ -234,6 +239,7 @@
                  self.x+=moveStep;
              else
                  return;
+             sendMsg=true;
          }
          //下
          if (e.keyCode === 40||e.keyCode === 83) {
@@ -241,10 +247,20 @@
                  self.y+=moveStep;
              else
                  return;
+             sendMsg=true;
          }
          if (e.keyCode === 13) {
-             self.shoot();
+             sendMsg=true;
+             if(self.status==1)
+                 self.shoot();
          }
-         socket.send(self)
+         if(sendMsg) {
+             if(self.status==0){//你已经死了
+                 console.log("死人是不能动的！")
+                 return;
+             }else {
+                 socket.send(self)
+             }
+         }
      };
 });
