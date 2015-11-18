@@ -17,30 +17,44 @@ var playerArray=new Array();
 
 //WebSocket连接监听
 io.on('connection', function (socket) {
-  socket.emit('open');//通知客户端已连接
-
-  // 打印握手信息
-  // console.log(socket.handshake);
-
-  // 构造客户端对象
+  var address = socket.handshake.address;
   var client = {
     socket:socket,
-    name:false,
-    color:getColor()
+    name:false
   };
+  //不设定同一个ip只能连一个
+  socket.emit('open');//通知客户端已连接
+
+  //同一个ip只能连接一个 注释掉上面一行代码才能运行
+  //var existsPlayer=getPlayerByAddress(address);
+  //if(!existsPlayer){
+  //  console.log("getPlayerByAddress(address)");
+  //  socket.emit('open');//通知客户端已连接
+  //}else{
+  //  console.log("已经建立连接！");
+  //  socket.emit('existsPlayer', existsPlayer);//通知客户端不重复连接
+  //  client.id=existsPlayer.id;
+  //}
+
+  // 打印握手信息
+   console.log(socket.handshake);
+
+  // 构造客户端对象
 
   // 对message事件的监听
   socket.on('message', function(msg){
-    var obj = {time:getTime(),color:client.color};
+    var obj = {time:getTime()};
 
     if(!client.id) {
       client.id=msg.id;
       obj['id']=msg.id;
       obj['x']=msg.x;
       obj['y']=msg.y;
+      obj['status']=msg.status;
       obj['forward'] = msg.forward;
       obj['author'] = 'System';
       obj['type'] = 'welcome';
+      obj['address']=address;
       playerArray[playerArray.length]=obj;
       //返回欢迎语
       //广播新用户已登陆
@@ -53,11 +67,11 @@ io.on('connection', function (socket) {
           obj['y'] = msg.y;
           obj['type'] = 'message';
           obj['forward'] = msg.forward;
-          var i;
+          obj['status']=msg.status;
           var player = getPlayerFromArray(msg.id);
           player["x"] = msg.x;
           player["y"] = msg.y;
-          player["forward"] = msg.forwad;
+          player["forward"] = msg.forward;
           // 返回消息（可以省略）
           socket.emit('message', obj);
           // 广播向其他用户发消息
@@ -87,6 +101,17 @@ io.on('connection', function (socket) {
     }
   });
 
+  function getPlayerByAddress(add){
+    var i;
+    for(i=0;i<playerArray.length;i++){
+      if(playerArray[i].address===add){
+        console.log(playerArray[i]);
+        return playerArray[i];
+      }
+    }
+    console.log(false);
+    return false;
+  }
   function getPlayerFromArray(id){
     var i;
     for(i=0;i<playerArray.length;i++){
@@ -99,7 +124,6 @@ io.on('connection', function (socket) {
   socket.on('disconnect', function () {
     var obj = {
       time:getTime(),
-      color:client.color,
       author:'System',
       text:client.name,
       type:'disconnect',
@@ -155,10 +179,4 @@ server.listen(app.get('port'), function(){
 var getTime=function(){
   var date = new Date();
   return date.getHours()+":"+date.getMinutes()+":"+date.getSeconds();
-}
-
-var getColor=function(){
-  var colors = ['aliceblue','antiquewhite','aqua','aquamarine','pink','red','green',
-    'orange','blue','blueviolet','brown','burlywood','cadetblue'];
-  return colors[Math.round(Math.random() * 10000 % colors.length)];
 }

@@ -46,10 +46,10 @@
                 //    alert("you die!")
                 //}
                 if(bullet.playerId==self.id){
-                        var msg={};
-                        msg['attackedId']=id;
-                        msg['type']='attMsg';
-                        socket.send(msg);
+                    var msg={};
+                    msg['attackedId']=id;
+                    msg['type']='attMsg';
+                    socket.send(msg);
                 }
                 return true;
             }
@@ -111,14 +111,30 @@
         return this;
     }
     //建立websocket连接
-    socket = io.connect('http://localhost:3000');
+    socket = io.connect('localhost:3000',{
+        'force new connection': true,
+        reconnect: true,
+        'reconnection delay': 200,
+        'max reconnection attempts': 10
+    });
     //收到server的连接确认
     socket.on('open',function(){
         //status.text('Choose a name:');
         //获取当前广场上的玩家及其位置
         //将玩家们添加到playground
-        socket.send(self)
+        socket.send(self);
     });
+     //收到server的连接确认
+     socket.on('existsPlayer',function(json){
+         self.id=json.id;
+         self.x=json.x;
+         self.y=json.y;
+         self.forward=json.forward;
+         self.status=json.status;
+         playerArray[playerArray.length]=json;
+         var p = getPlayerFromJson(json);
+         playground.prepend(p);
+     });
 
     //监听system事件，判断welcome或者disconnect，打印系统消息信息
     socket.on('system',function(json){
@@ -126,17 +142,21 @@
             var i;
             for(i=0;i<json.length;i++){
                 if(json[i]){
-                    playerArray[playerArray.length]=json[i]
-                    var p = getPlayerFromJson(json[i]);
-                    playground.prepend(p);
+                    if(!document.getElementById(json[i].id)) {
+                        playerArray[playerArray.length]=json[i]
+                        var p = getPlayerFromJson(json[i]);
+                        playground.prepend(p);
+                    }
                 }
             }
         }else {
             if (json.type === 'welcome') {
                 //通知广场上的玩家 多了一个人来玩
-                playerArray[playerArray.length]=json
-                var p = getPlayerFromJson(json)
-                playground.prepend(p);
+                if(!document.getElementById(json.id)) {
+                    playerArray[playerArray.length] = json;
+                    var p = getPlayerFromJson(json);
+                    playground.prepend(p);
+                }
             } else if (json.type == 'disconnect') {
                 //通知广场上的玩家 少了一个人玩
                 var p = document.getElementById(json.id)
@@ -205,7 +225,12 @@
         var player=getPlayerFromArray(json.id);
         player["x"]=json.x;
         player["y"]=json.y;
-        player["forward"]=json.forwad;
+        player["forward"]=json.forward;
+        if(json.id==self.id){
+            self.x=json.x;
+            self.y=json.y;
+            self.forward=json.forward;
+        }
     });
     socket.on('shoot',function(json){
         //获取位置移动信息
