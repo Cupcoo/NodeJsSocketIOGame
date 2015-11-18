@@ -36,14 +36,20 @@
                 var b = document.getElementById(id);
                 b.parentNode.removeChild(b);
                 removePlayer(id);
-                if(id==self.id){
-                    //通知所有人 我中枪了
-                    var msg={};
-                    msg['attackedId']=id;
-                    msg['type']='attMsg';
-                    socket.send(msg);
-                    self.status=0;
-                    alert("you die!")
+                //if(id==self.id){
+                //    //通知所有人 我中枪了
+                //    var msg={};
+                //    msg['attackedId']=id;
+                //    msg['type']='attMsg';
+                //    socket.send(msg);
+                //    self.status=0;
+                //    alert("you die!")
+                //}
+                if(bullet.playerId==self.id){
+                        var msg={};
+                        msg['attackedId']=id;
+                        msg['type']='attMsg';
+                        socket.send(msg);
                 }
                 return true;
             }
@@ -184,6 +190,10 @@
             p.parentNode.removeChild(p);
         }
         removePlayer(id);
+        if(id==self.id){
+            self.status=0;
+            alert("you die!");
+        }
     });
     socket.on('message',function(json){
         //获取位置移动信息
