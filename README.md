@@ -9,3 +9,5 @@ in your terminal,type command under:
 >> node app.js
 
 Before you run this project , please make sure that npm and node enviroment have been installed.
+
+I complete my target that do some practice of socket.io and node.js,therefore I wont update thie project for a while。
